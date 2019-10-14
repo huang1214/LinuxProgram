@@ -10,7 +10,7 @@ int main(){
     int (*f2)(),(*f3)();
     char *error;
 
-    handle = dlopen("/home/rlk/linuxprogram/code/dynamiclib/libtest.so",RTLD_LAZY);
+    handle = dlopen("/home/rlk/linuxprogram/week6/code/dynamiclib/libtest.so",RTLD_LAZY);
     if (!handle)
     {
         fprintf(stderr,"%s\n",dlerror());

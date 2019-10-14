@@ -1,4 +1,4 @@
-#include "/home/rlk/linuxprogram/code/staticlib/lib.h"
+#include "/home/rlk/linuxprogram/week6/code/staticlib/lib.h"
 
 int main(){
     int a[100];
