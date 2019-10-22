@@ -160,7 +160,7 @@
   }
   ```
 
-- 进制只与缓冲I/O，而内存缓冲在满足某些条件（1. 缓冲区满 2.遇到\n）时，才将数据与硬盘进行交互（效率高）
+- 进制只与缓冲I/O，而内存缓冲在满足某些条件（1. 缓冲区满 2.遇到\n 3.使用fflush（）强制操作 4. 使用fclose() 5.程序结束）时，才将数据与硬盘进行交互（效率高）
 
 - 仅能操作磁盘文件
 
@@ -169,11 +169,123 @@
 > 1. 可操作各种类型文件
 > 2. 对文件I/O是立即执行的
 
+### 缓冲在派生进程中的验证
 
+#### 例一
 
+编写如下程序
 
+```c
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
 
+char buf[] = {"write to stdout\n"};
 
+int main()
+{
+    pid_t id;
+    if(write(STDOUT_FILENO, buf, sizeof(buf) - 1) != sizeof(buf) - 1)
+    perror("can't write");
+    printf("printf\n");
+    id = fork();
+    if(id < 0)
+    perror("fork error");
+    exit(0);
+}
+```
 
+则他的输出效果就应该是
 
+```shell
+write to stdout
+printf
+```
 
+之所以这个结果是因为printf中的\n已经清空了缓冲区，所以派生进程时，printf这句话并没有被复制一份
+
+> 稍稍修改一下
+
+```c
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <sys/types.h>
+char buf[] = {"write to stdout\n"};
+int main()
+{
+    pid_t id;
+    if(write(STDOUT_FILENO, buf, sizeof(buf) - 1) != sizeof(buf) - 1)
+    perror("can't write");
+    printf("printf "); //注意这里我们把换行符\n替换为一个空格
+    id = fork();
+    if(id < 0)
+    perror("fork error");
+    exit(0);
+}
+```
+
+输出结果为
+
+```shell
+write to stdout
+printf
+printf
+```
+
+#### 例二
+
+> 编写如下程序
+
+```c
+#include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+int globa = 4;
+
+int main (void )
+{
+pid_t pid;
+int vari = 5;
+printf ("before fork\n" );
+    // fork会返回两个值，给父进程》0的值，给子进程=0的值
+if ((pid = fork()) < 0){
+  printf ("fork error\n");
+  exit (0);
+}else if (pid == 0){
+  globa++ ;
+  vari--;
+  printf("Child changed\n");
+}else
+  printf("Parent did not changde\n");
+  printf("globa = %d vari = %d\n",globa,vari);
+  exit(0);
+}
+```
+
+> 输出结果
+
+```shell
+[root@happy bin]# ./simplefork
+before fork
+Child changed
+globa = 5 vari = 4
+Parent did not changde
+globa = 4 vari = 5
+
+重定向到文件时before fork输出两边
+[root@happy bin]# ./simplefork>temp
+[root@happy bin]# cat temp
+before fork
+Child changed
+globa = 5 vari = 4
+before fork
+Parent did not changde
+globa = 4 vari = 5
+```
+
+分析：
+
+分析直接运行程序时标准输出是行缓冲的，很快被新的一行冲掉。而重定向后，标准输出是全缓冲的。当调用fork时before fork这行仍保存在缓冲中，并随着数据段复制到子进程缓冲中。这样，这一行就分别进入父子进程的输出缓冲中，余下的输出就接在了这一行的后面。
