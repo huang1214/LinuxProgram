@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <sys/types.h>
 
 int main()
 {
@@ -24,7 +25,6 @@ int main()
 		printf("child pid=%d ppid=%d :f=%p\n",getpid(),getppid(),f);
 		fputs(a,f);
 		rewind(f);//这个也是可以的
-		//fseek(f,0L,SEEK_SET);
 		while(fgets(b,5,f)!=NULL)
 		fputs(b,stdout);
 		putchar('\n');
