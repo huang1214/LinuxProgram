@@ -50,7 +50,7 @@ int main(int argc, char const *argv[])
 	if(pid3 ==0){
         // 读出2-3管道的数据，并求和
         close(two2thrfd[1]);
-        int c = 0;
+        //int c = 0;
         long sum = 0;
         read(two2thrfd[0],&w_buf,sizeof(w_buf));
         for (int i = 0; i < 65536; i++)
