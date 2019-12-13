@@ -22,7 +22,7 @@ enum command get_usr_cmd() {
 int main(void) {
     pthread_t tid;
     int rv, cmd, k = 0;
-    struct thread *last_thread, *tp;e
+    struct thread *last_thread, *tp;
 
     while (1) {
         cmd = get_user_cmd();
